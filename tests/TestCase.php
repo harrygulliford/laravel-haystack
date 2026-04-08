@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Sammyjo20\LaravelHaystack\Tests;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Psr\Container\NotFoundExceptionInterface;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -94,7 +93,6 @@ class TestCase extends Orchestra
         config()->set('database.connections.pgsql.username', env('POSTGRES_USER', 'postgres'));
         config()->set('database.connections.pgsql.password', env('POSTGRES_PASSWORD', ''));
 
-        Schema::setConnection(DB::connection('pgsql'));
         Schema::dropAllTables();
 
         $migration1 = include __DIR__.'/../database/migrations/create_haystacks_table.php.stub';
