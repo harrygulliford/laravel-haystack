@@ -13,8 +13,8 @@ class NextJob
      * Constructor
      */
     public function __construct(
-        readonly public StackableJob $job,
-        readonly public HaystackBale $haystackRow,
+        public readonly StackableJob $job,
+        public readonly HaystackBale $haystackRow,
     ) {
         //
     }
