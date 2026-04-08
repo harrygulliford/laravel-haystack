@@ -221,10 +221,21 @@ test('a haystack can have closures', function () {
 
     expect($callbacks)->toBeInstanceOf(CallbackCollection::class);
 
-    expect($callbacks->onThen)->toEqual([new SerializableClosure($closureA)]);
-    expect($callbacks->onCatch)->toEqual([new SerializableClosure($closureB)]);
-    expect($callbacks->onFinally)->toEqual([new SerializableClosure($closureC)]);
-    expect($callbacks->onPaused)->toEqual([new SerializableClosure($closureC)]);
+    expect($callbacks->onThen)->toHaveCount(1);
+    expect($callbacks->onThen[0])->toBeInstanceOf(SerializableClosure::class);
+    expect(($callbacks->onThen[0])())->toBe('A');
+
+    expect($callbacks->onCatch)->toHaveCount(1);
+    expect($callbacks->onCatch[0])->toBeInstanceOf(SerializableClosure::class);
+    expect(($callbacks->onCatch[0])())->toBe('B');
+
+    expect($callbacks->onFinally)->toHaveCount(1);
+    expect($callbacks->onFinally[0])->toBeInstanceOf(SerializableClosure::class);
+    expect(($callbacks->onFinally[0])())->toBe('C');
+
+    expect($callbacks->onPaused)->toHaveCount(1);
+    expect($callbacks->onPaused[0])->toBeInstanceOf(SerializableClosure::class);
+    expect(($callbacks->onPaused[0])())->toBe('D');
 });
 
 test('a haystack can have multiple closures for each method', function (string $method) {
@@ -255,12 +266,18 @@ test('a haystack can have multiple closures for each method', function (string $
 
     expect($callbacks->$callbackMethod)->toBeArray();
 
-    expect($callbacks->$callbackMethod)->toEqual([
-        new SerializableClosure($closureA),
-        new SerializableClosure($closureB),
-        new SerializableClosure($closureC),
-        new SerializableClosure($closureC),
-    ]);
+    $stack = $callbacks->$callbackMethod;
+
+    expect($stack)->toHaveCount(4);
+
+    foreach ($stack as $entry) {
+        expect($entry)->toBeInstanceOf(SerializableClosure::class);
+    }
+
+    expect(($stack[0])())->toBe('A');
+    expect(($stack[1])())->toBe('B');
+    expect(($stack[2])())->toBe('C');
+    expect(($stack[3])())->toBe('D');
 })->with([
     'then', 'catch', 'finally', 'paused',
 ]);

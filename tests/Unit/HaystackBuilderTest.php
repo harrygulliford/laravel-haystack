@@ -57,104 +57,127 @@ test('you can specify a global timeout, queue and connection on the builder for 
 test('you can specify a closure or a callable to happen at the end of a successful haystack and it will chain functions', function () {
     $builder = new HaystackBuilder;
 
-    $builder->then(fn () => 'Hello');
+    $hello = fn () => 'Hello';
+
+    $builder->then($hello);
 
     expect($builder->getCallbacks()->onThen)->toEqual([
-        new SerializableClosure(fn () => 'Hello'),
+        new SerializableClosure($hello),
     ]);
 
     $builder->then(new InvokableClass);
 
-    expect($builder->getCallbacks()->onThen)->toEqual([
-        new SerializableClosure(fn () => 'Hello'),
-        new SerializableClosure(fn () => new InvokableClass),
-    ]);
+    $onThen = $builder->getCallbacks()->onThen;
+
+    expect($onThen)->toHaveCount(2);
+    expect($onThen[0])->toEqual(new SerializableClosure($hello));
+    expect($onThen[1])->toBeInstanceOf(SerializableClosure::class);
+    expect(($onThen[1])())->toBe('Howdy!');
 });
 
 test('you can specify a closure to happen at the end of any haystack', function () {
     $builder = new HaystackBuilder;
 
-    $builder->finally(fn () => 'Hello');
+    $hello = fn () => 'Hello';
+
+    $builder->finally($hello);
 
     expect($builder->getCallbacks()->onFinally)->toEqual([
-        new SerializableClosure(fn () => 'Hello'),
+        new SerializableClosure($hello),
     ]);
 
     $builder->finally(new InvokableClass);
 
-    expect($builder->getCallbacks()->onFinally)->toEqual([
-        new SerializableClosure(fn () => 'Hello'),
-        new SerializableClosure(fn () => new InvokableClass),
-    ]);
+    $onFinally = $builder->getCallbacks()->onFinally;
+
+    expect($onFinally)->toHaveCount(2);
+    expect($onFinally[0])->toEqual(new SerializableClosure($hello));
+    expect($onFinally[1])->toBeInstanceOf(SerializableClosure::class);
+    expect(($onFinally[1])())->toBe('Howdy!');
 });
 
 test('you can specify a closure to happen on an erroneous haystack', function () {
     $builder = new HaystackBuilder;
 
-    $builder->catch(fn () => 'Hello');
+    $hello = fn () => 'Hello';
+
+    $builder->catch($hello);
 
     expect($builder->getCallbacks()->onCatch)->toEqual([
-        new SerializableClosure(fn () => 'Hello'),
+        new SerializableClosure($hello),
     ]);
 
     $builder->catch(new InvokableClass);
 
-    expect($builder->getCallbacks()->onCatch)->toEqual([
-        new SerializableClosure(fn () => 'Hello'),
-        new SerializableClosure(fn () => new InvokableClass),
-    ]);
+    $onCatch = $builder->getCallbacks()->onCatch;
+
+    expect($onCatch)->toHaveCount(2);
+    expect($onCatch[0])->toEqual(new SerializableClosure($hello));
+    expect($onCatch[1])->toBeInstanceOf(SerializableClosure::class);
+    expect(($onCatch[1])())->toBe('Howdy!');
 });
 
 test('you can specify a closure to happen on a paused haystack', function () {
     $builder = new HaystackBuilder;
 
-    $builder->paused(fn () => 'Hello');
+    $hello = fn () => 'Hello';
+
+    $builder->paused($hello);
 
     expect($builder->getCallbacks()->onPaused)->toEqual([
-        new SerializableClosure(fn () => 'Hello'),
+        new SerializableClosure($hello),
     ]);
 
     $builder->paused(new InvokableClass);
 
-    expect($builder->getCallbacks()->onPaused)->toEqual([
-        new SerializableClosure(fn () => 'Hello'),
-        new SerializableClosure(fn () => new InvokableClass),
-    ]);
+    $onPaused = $builder->getCallbacks()->onPaused;
+
+    expect($onPaused)->toHaveCount(2);
+    expect($onPaused[0])->toEqual(new SerializableClosure($hello));
+    expect($onPaused[1])->toBeInstanceOf(SerializableClosure::class);
+    expect(($onPaused[1])())->toBe('Howdy!');
 });
 
 test('you can specify middleware as a closure, invokable class or an array', function () {
     $builder = new HaystackBuilder;
 
-    $builder->addMiddleware(fn () => [new Middleware()]);
+    $returnsMiddlewareArray = fn () => [new Middleware];
+
+    $builder->addMiddleware($returnsMiddlewareArray);
 
     expect($builder->getMiddleware()->data)->toEqual([
-        new SerializableClosure(fn () => [new Middleware()]),
+        new SerializableClosure($returnsMiddlewareArray),
     ]);
 
     $builder->addMiddleware(new InvokableMiddleware);
 
-    expect($builder->getMiddleware()->data)->toEqual([
-        new SerializableClosure(fn () => [new Middleware()]),
-        new SerializableClosure(fn () => new InvokableMiddleware),
-    ]);
+    $data = $builder->getMiddleware()->data;
 
-    $builder->addMiddleware([new Middleware]);
+    expect($data)->toHaveCount(2);
+    expect($data[0])->toEqual(new SerializableClosure($returnsMiddlewareArray));
+    expect($data[1])->toBeInstanceOf(SerializableClosure::class);
+    $invokableResult = ($data[1])();
+    expect($invokableResult)->toHaveCount(1);
+    expect($invokableResult[0])->toBeInstanceOf(Middleware::class);
 
-    expect($builder->getMiddleware()->data)->toEqual([
-        new SerializableClosure(fn () => [new Middleware()]),
-        new SerializableClosure(fn () => new InvokableMiddleware),
-        new SerializableClosure(fn () => [new Middleware()]),
-    ]);
+    $preset = [new Middleware];
+    $builder->addMiddleware($preset);
+
+    $data = $builder->getMiddleware()->data;
+
+    expect($data)->toHaveCount(3);
+    expect($data[0])->toEqual(new SerializableClosure($returnsMiddlewareArray));
+    expect($data[1])->toBeInstanceOf(SerializableClosure::class);
+    expect(($data[2])())->toBe($preset);
 
     // Now we'll try to get all the middleware, it should give us a nice array of them all
 
     $allMiddleware = $builder->getMiddleware()->toMiddlewareArray();
 
-    expect($allMiddleware)->toEqual([
-        new Middleware,
-        new Middleware,
-        new Middleware,
-    ]);
+    expect($allMiddleware)->toHaveCount(3);
+    expect($allMiddleware[0])->toBeInstanceOf(Middleware::class);
+    expect($allMiddleware[1])->toBeInstanceOf(Middleware::class);
+    expect($allMiddleware[2])->toBeInstanceOf(Middleware::class);
 });
 
 test('you can create a haystack from a builder', function () {
